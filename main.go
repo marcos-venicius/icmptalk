@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-  iface := flag.String("iface", "0.0.0.0", "your machine ip")
+	iface := flag.String("iface", "0.0.0.0", "your machine ip")
 
-  flag.Parse()
+	flag.Parse()
 
 	addr, err := handshake.ListenForConnection(*iface)
 

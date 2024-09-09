@@ -3,9 +3,10 @@ package handshake
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/net/icmp"
 	"log"
 	"net"
+
+	"golang.org/x/net/icmp"
 )
 
 // ListenForConnection returns (connection net address, error)
@@ -20,7 +21,7 @@ func ListenForConnection(iface string) (net.Addr, error) {
 
 	fmt.Printf("[*] listening for connections at %s...\n", iface)
 
-	handshake := NewHandshake()
+	hs := newHandshake()
 
 	msg := make([]byte, 64)
 
@@ -35,22 +36,22 @@ func ListenForConnection(iface string) (net.Addr, error) {
 
 		if err != nil {
 			fmt.Printf("[%s] Invalid greeting\n", sourceIP)
-			handshake = NewHandshake()
+			hs = newHandshake()
 			continue
 		}
 
-		if handshake.addStep(n, sourceIP.String()) {
-			fmt.Printf("[%s] (%d/%d)\n", sourceIP, handshake.step, handshake.steps)
+		if hs.addStep(n, sourceIP.String()) {
+			fmt.Printf("[%s] (%d/%d)\n", sourceIP, hs.step, hs.steps)
 		} else {
 			fmt.Printf("[%s] Invalid handshake\n", sourceIP)
-			handshake = NewHandshake()
+			hs = newHandshake()
 			continue
 		}
 
-		if handshake.shouldValidate() {
+		if hs.shouldValidate() {
 			fmt.Printf("[%s] Validating handshake\n", sourceIP)
 
-			isValid := handshake.validate()
+			isValid := hs.validate()
 
 			if isValid {
 				return sourceIP, nil

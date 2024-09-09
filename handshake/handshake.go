@@ -2,17 +2,17 @@ package handshake
 
 import "strconv"
 
-type Handshake struct {
+type handshake struct {
 	step    int
 	numbers []int
 	steps   int
 	ip      string
 }
 
-func NewHandshake() *Handshake {
+func newHandshake() *handshake {
 	steps := 4
 
-	return &Handshake{
+	return &handshake{
 		step:    0,
 		numbers: make([]int, steps),
 		steps:   steps,
@@ -20,7 +20,7 @@ func NewHandshake() *Handshake {
 	}
 }
 
-func (h *Handshake) addStep(step int, ip string) bool {
+func (h *handshake) addStep(step int, ip string) bool {
 	if h.steps == 0 || h.shouldValidate() {
 		return false
 	}
@@ -37,11 +37,11 @@ func (h *Handshake) addStep(step int, ip string) bool {
 	return true
 }
 
-func (h *Handshake) shouldValidate() bool {
+func (h *handshake) shouldValidate() bool {
 	return h.step == h.steps
 }
 
-func (h *Handshake) validate() bool {
+func (h *handshake) validate() bool {
 	s := 0
 
 	for _, n := range h.numbers[:h.steps-1] {
