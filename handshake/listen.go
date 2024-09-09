@@ -5,28 +5,20 @@ import (
 	"fmt"
 	"log"
 	"net"
-
-	"golang.org/x/net/icmp"
 )
 
 // ListenForConnection returns (connection net address, error)
 func ListenForConnection(iface string) (net.Addr, error) {
-	conn, err := icmp.ListenPacket("ip4:icmp", iface)
+	hs := newHandshake(iface)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer conn.Close()
+	defer hs.conn.Close()
 
 	fmt.Printf("[*] listening for connections at %s...\n", iface)
-
-	hs := newHandshake()
 
 	msg := make([]byte, 64)
 
 	for {
-		length, sourceIP, err := conn.ReadFrom(msg)
+		length, sourceIP, err := hs.conn.ReadFrom(msg)
 
 		if err != nil {
 			log.Fatal(err)
@@ -36,16 +28,14 @@ func ListenForConnection(iface string) (net.Addr, error) {
 
 		if err != nil {
 			fmt.Printf("[%s] Invalid greeting\n", sourceIP)
-			hs = newHandshake()
-			continue
+			break
 		}
 
 		if hs.addStep(n, sourceIP.String()) {
 			fmt.Printf("[%s] (%d/%d)\n", sourceIP, hs.step, hs.steps)
 		} else {
 			fmt.Printf("[%s] Invalid handshake\n", sourceIP)
-			hs = newHandshake()
-			continue
+			break
 		}
 
 		if hs.shouldValidate() {
@@ -53,11 +43,17 @@ func ListenForConnection(iface string) (net.Addr, error) {
 
 			isValid := hs.validate()
 
-			if isValid {
-				return sourceIP, nil
+			if !isValid {
+				break
 			}
 
-			break
+			err := hs.confirm()
+
+			if err != nil {
+				return nil, err
+			}
+
+			return sourceIP, nil
 		}
 	}
 

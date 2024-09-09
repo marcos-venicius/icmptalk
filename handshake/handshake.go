@@ -1,21 +1,37 @@
 package handshake
 
-import "strconv"
+import (
+	"fmt"
+	"log"
+	"net"
+	"os"
+
+	"golang.org/x/net/icmp"
+	"golang.org/x/net/ipv4"
+)
 
 type handshake struct {
 	step    int
 	numbers []int
 	steps   int
 	ip      string
+	conn    *icmp.PacketConn
 }
 
-func newHandshake() *handshake {
+func newHandshake(iface string) *handshake {
 	steps := 4
+
+	conn, err := icmp.ListenPacket("ip4:icmp", iface)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return &handshake{
 		step:    0,
 		numbers: make([]int, steps),
 		steps:   steps,
+		conn:    conn,
 		ip:      "",
 	}
 }
@@ -41,34 +57,46 @@ func (h *handshake) shouldValidate() bool {
 	return h.step == h.steps
 }
 
-func (h *handshake) validate() bool {
+func (h *handshake) sumSteps() int {
 	s := 0
 
 	for _, n := range h.numbers[:h.steps-1] {
 		s += n
 	}
 
+	return s
+}
+
+func (h *handshake) validate() bool {
+	s := h.sumSteps()
+
 	return s == h.numbers[h.steps-1] && s%2 != 0
 }
 
-func parseGreeting(msg []byte) (int, error) {
-	s, c, d := false, 0, make([]byte, 5, 5)
+func (h *handshake) confirm() error {
+	s := h.sumSteps() * 2
 
-	for _, x := range msg {
-		if x == '|' && !s {
-			s = true
-			continue
-		} else if x == '|' && s && c == 0 {
-			continue
-		} else if x == '|' && s {
-			break
-		} else if s {
-			d[c] = x
-			c++
-		}
+	message := fmt.Sprintf("|%d|", s)
+
+	wm := icmp.Message{
+		Type: ipv4.ICMPTypeEcho,
+		Code: 0,
+		Body: &icmp.Echo{
+			ID:   os.Getpid() & 0xffff,
+			Seq:  1,
+			Data: []byte(message),
+		},
 	}
 
-	n := string(d[:c])
+	wb, err := wm.Marshal(nil)
 
-	return strconv.Atoi(n)
+	if err != nil {
+		return err
+	}
+
+	if _, err := h.conn.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(h.ip)}); err != nil {
+		return err
+	}
+
+	return nil
 }

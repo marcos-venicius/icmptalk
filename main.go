@@ -20,6 +20,4 @@ func main() {
 	}
 
 	fmt.Printf("Successfull handshake with %s\n", addr)
-
-	handshake.AcceptsConnection(addr)
 }
