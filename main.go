@@ -49,19 +49,24 @@ func main() {
 			message := <-c.Messages()
 
 			if message.Me {
-				fmt.Printf("\033[1;33m# \033[0m %s\n", message.Content)
+				fmt.Printf("\033[1;33m#\033[0m %s", message.Content)
 			} else {
-				fmt.Printf("\033[1;33m# \033[0m %s\n", message.Content)
+				fmt.Printf("\033[1;33m#\033[0m %s", message.Content)
 			}
 		}
 	}()
 
+	reader := bufio.NewReader(os.Stdin)
+
 	for {
-		reader := bufio.NewReader(os.Stdin)
+		text, err := reader.ReadString('\n')
 
-		text, _ := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("\033[1;31mE \033[0m %s\n", err)
+			continue
+		}
 
-		err := c.Send(text)
+		err = c.Send(text)
 
 		if err != nil {
 			fmt.Printf("\033[1;31mE \033[0m %s\n", err)

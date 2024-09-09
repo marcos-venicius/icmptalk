@@ -29,8 +29,6 @@ func NewChat(h *handshake.Handshake) *Chat {
 func (c *Chat) Send(message string) error {
 	err := protocol.SendMessage(c.h.Connection(), message, c.h.Pair())
 
-	protocol.ListenMessage(c.h.Connection(), 1)
-
 	return err
 }
 
