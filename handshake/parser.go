@@ -2,7 +2,7 @@ package handshake
 
 import "strconv"
 
-func parseGreeting(msg []byte) (int, error) {
+func parseHandshakeStep(msg []byte) (int, error) {
 	s, c, d := false, 0, make([]byte, 5, 5)
 
 	for _, x := range msg {

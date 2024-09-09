@@ -22,7 +22,7 @@ func (h *handshake) ListenForConnection() (net.Addr, error) {
 			log.Fatal(err)
 		}
 
-		n, err := parseGreeting(msg[:length])
+		n, err := parseHandshakeStep(msg[:length])
 
 		if err != nil {
 			fmt.Printf("[%s] Invalid greeting\n", sourceIP)
@@ -45,7 +45,9 @@ func (h *handshake) ListenForConnection() (net.Addr, error) {
 				break
 			}
 
-			err := h.confirm()
+			s := h.sumSteps() * 2
+
+			err := h.sendMessage(fmt.Sprintf("|%d|", s), h.ip)
 
 			if err != nil {
 				return nil, err
