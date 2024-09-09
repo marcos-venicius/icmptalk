@@ -53,7 +53,25 @@ func (h *handshake) ListenForConnection() (net.Addr, error) {
 				return nil, err
 			}
 
-			return sourceIP, nil
+			h.listenMessage() // echo reply of previous message
+
+			ip, data, err := h.listenMessage()
+
+			if err != nil {
+				return nil, err
+			}
+
+			if ip != h.ip {
+				return nil, errors.New("invalid responder")
+			}
+
+			response := parseString(data)
+
+			if response == "OK" {
+				return sourceIP, nil
+			}
+
+			return nil, errors.New("handshake failed")
 		}
 	}
 
