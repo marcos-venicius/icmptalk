@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 )
 
 // ListenForConnection returns (connection net address, error)
-func (h *handshake) ListenForConnection() (net.Addr, error) {
+func (h *handshake) ListenForConnection() (string, error) {
 	defer h.conn.Close()
 
 	fmt.Printf("[*] listening for connections at %s...\n", h.iface)
@@ -50,7 +49,7 @@ func (h *handshake) ListenForConnection() (net.Addr, error) {
 			err := h.sendMessage(fmt.Sprintf("|%d|", s), h.ip)
 
 			if err != nil {
-				return nil, err
+				return "", err
 			}
 
 			h.listenMessage() // echo reply of previous message
@@ -58,22 +57,22 @@ func (h *handshake) ListenForConnection() (net.Addr, error) {
 			ip, data, err := h.listenMessage()
 
 			if err != nil {
-				return nil, err
+				return "", err
 			}
 
 			if ip != h.ip {
-				return nil, errors.New("invalid responder")
+				return "", errors.New("invalid responder")
 			}
 
 			response := parseString(data)
 
 			if response == "OK" {
-				return sourceIP, nil
+				return sourceIP.String(), nil
 			}
 
-			return nil, errors.New("handshake failed")
+			return "", errors.New("handshake failed")
 		}
 	}
 
-	return nil, errors.New("no valid handshake")
+	return "", errors.New("no valid handshake")
 }
