@@ -1,13 +1,9 @@
 package handshake
 
 import (
-	"fmt"
 	"log"
-	"net"
-	"os"
 
 	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
 )
 
 type handshake struct {
@@ -15,10 +11,11 @@ type handshake struct {
 	numbers []int
 	steps   int
 	ip      string
+	iface   string
 	conn    *icmp.PacketConn
 }
 
-func newHandshake(iface string) *handshake {
+func NewHandshake(iface string) *handshake {
 	steps := 4
 
 	conn, err := icmp.ListenPacket("ip4:icmp", iface)
@@ -29,6 +26,7 @@ func newHandshake(iface string) *handshake {
 
 	return &handshake{
 		step:    0,
+		iface:   iface,
 		numbers: make([]int, steps),
 		steps:   steps,
 		conn:    conn,
@@ -71,32 +69,4 @@ func (h *handshake) validate() bool {
 	s := h.sumSteps()
 
 	return s == h.numbers[h.steps-1] && s%2 != 0
-}
-
-func (h *handshake) confirm() error {
-	s := h.sumSteps() * 2
-
-	message := fmt.Sprintf("|%d|", s)
-
-	wm := icmp.Message{
-		Type: ipv4.ICMPTypeEcho,
-		Code: 0,
-		Body: &icmp.Echo{
-			ID:   os.Getpid() & 0xffff,
-			Seq:  1,
-			Data: []byte(message),
-		},
-	}
-
-	wb, err := wm.Marshal(nil)
-
-	if err != nil {
-		return err
-	}
-
-	if _, err := h.conn.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(h.ip)}); err != nil {
-		return err
-	}
-
-	return nil
 }

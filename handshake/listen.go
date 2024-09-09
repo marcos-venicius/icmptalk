@@ -8,17 +8,15 @@ import (
 )
 
 // ListenForConnection returns (connection net address, error)
-func ListenForConnection(iface string) (net.Addr, error) {
-	hs := newHandshake(iface)
+func (h *handshake) ListenForConnection() (net.Addr, error) {
+	defer h.conn.Close()
 
-	defer hs.conn.Close()
-
-	fmt.Printf("[*] listening for connections at %s...\n", iface)
+	fmt.Printf("[*] listening for connections at %s...\n", h.iface)
 
 	msg := make([]byte, 64)
 
 	for {
-		length, sourceIP, err := hs.conn.ReadFrom(msg)
+		length, sourceIP, err := h.conn.ReadFrom(msg)
 
 		if err != nil {
 			log.Fatal(err)
@@ -31,23 +29,23 @@ func ListenForConnection(iface string) (net.Addr, error) {
 			break
 		}
 
-		if hs.addStep(n, sourceIP.String()) {
-			fmt.Printf("[%s] (%d/%d)\n", sourceIP, hs.step, hs.steps)
+		if h.addStep(n, sourceIP.String()) {
+			fmt.Printf("[%s] (%d/%d)\n", sourceIP, h.step, h.steps)
 		} else {
 			fmt.Printf("[%s] Invalid handshake\n", sourceIP)
 			break
 		}
 
-		if hs.shouldValidate() {
+		if h.shouldValidate() {
 			fmt.Printf("[%s] Validating handshake\n", sourceIP)
 
-			isValid := hs.validate()
+			isValid := h.validate()
 
 			if !isValid {
 				break
 			}
 
-			err := hs.confirm()
+			err := h.confirm()
 
 			if err != nil {
 				return nil, err

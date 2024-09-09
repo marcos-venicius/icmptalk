@@ -10,14 +10,19 @@ import (
 
 func main() {
 	iface := flag.String("iface", "0.0.0.0", "your machine ip")
+	listenMode := flag.Bool("listen", false, "starts in listen mode")
 
 	flag.Parse()
 
-	addr, err := handshake.ListenForConnection(*iface)
+	hs := handshake.NewHandshake(*iface)
 
-	if err != nil {
-		log.Fatal(err)
+	if *listenMode {
+		addr, err := hs.ListenForConnection()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Successfull handshake with %s\n", addr)
 	}
-
-	fmt.Printf("Successfull handshake with %s\n", addr)
 }
