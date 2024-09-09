@@ -18,20 +18,17 @@ func main() {
 	hs := handshake.NewHandshake(*iface)
 
 	if *listenMode {
-		addr, err := hs.ListenForConnection()
+		err := hs.ListenForConnection()
 
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		fmt.Printf("Successfull handshake with %s\n", addr)
 	} else {
 		err := hs.AskForConnection(*target)
 
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		fmt.Println("Connected successfully")
 	}
+	fmt.Println("Connected successfully")
 }

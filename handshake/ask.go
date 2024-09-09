@@ -7,12 +7,14 @@ import (
 	"net"
 )
 
-func (h *handshake) AskForConnection(ip string) error {
+func (h *Handshake) AskForConnection(ip string) error {
 	parsed := net.ParseIP(ip)
 
 	if parsed == nil {
 		return errors.New("invalid ip address")
 	}
+
+	h.ip = ip
 
 	i, s, numbers := 0, 0, make([]int, h.steps)
 
@@ -34,7 +36,7 @@ func (h *handshake) AskForConnection(ip string) error {
 	for _, n := range numbers {
 		message := fmt.Sprintf("|%d|", n)
 
-		err := h.sendMessage(message, ip)
+		err := h.sendMessage(message)
 
 		if err != nil {
 			return err
@@ -72,12 +74,12 @@ func (h *handshake) AskForConnection(ip string) error {
 	expected := numbers[len(numbers)-1] * 2
 
 	if n != expected {
-		h.sendMessage("|FAIL|", ip)
+		h.sendMessage("|FAIL|")
 
 		return errors.New("invalid handshake")
 	}
 
-	h.sendMessage("|OK|", ip)
+	h.sendMessage("|OK|")
 
 	return nil
 }

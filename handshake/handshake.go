@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/icmp"
 )
 
-type handshake struct {
+type Handshake struct {
 	step    int
 	numbers []int
 	steps   int
@@ -15,7 +15,7 @@ type handshake struct {
 	conn    *icmp.PacketConn
 }
 
-func NewHandshake(iface string) *handshake {
+func NewHandshake(iface string) *Handshake {
 	steps := 4
 
 	conn, err := icmp.ListenPacket("ip4:icmp", iface)
@@ -24,7 +24,7 @@ func NewHandshake(iface string) *handshake {
 		log.Fatal(err)
 	}
 
-	return &handshake{
+	return &Handshake{
 		step:    0,
 		iface:   iface,
 		numbers: make([]int, steps),
@@ -34,7 +34,15 @@ func NewHandshake(iface string) *handshake {
 	}
 }
 
-func (h *handshake) addStep(step int, ip string) bool {
+func (h *Handshake) Close() {
+	h.conn.Close()
+}
+
+func (h *Handshake) Connection() *icmp.PacketConn {
+	return h.conn
+}
+
+func (h *Handshake) addStep(step int, ip string) bool {
 	if h.steps == 0 || h.shouldValidate() {
 		return false
 	}
@@ -51,11 +59,11 @@ func (h *handshake) addStep(step int, ip string) bool {
 	return true
 }
 
-func (h *handshake) shouldValidate() bool {
+func (h *Handshake) shouldValidate() bool {
 	return h.step == h.steps
 }
 
-func (h *handshake) sumSteps() int {
+func (h *Handshake) sumSteps() int {
 	s := 0
 
 	for _, n := range h.numbers[:h.steps-1] {
@@ -65,7 +73,7 @@ func (h *handshake) sumSteps() int {
 	return s
 }
 
-func (h *handshake) validate() bool {
+func (h *Handshake) validate() bool {
 	s := h.sumSteps()
 
 	return s == h.numbers[h.steps-1] && s%2 != 0

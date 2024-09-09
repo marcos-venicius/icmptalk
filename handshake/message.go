@@ -4,14 +4,14 @@ import (
 	"net"
 )
 
-func (h *handshake) sendMessage(message string, to string) error {
+func (h *Handshake) sendMessage(message string) error {
 	packet, err := createIcmpPacket([]byte(message))
 
 	if err != nil {
 		return err
 	}
 
-	if _, err := h.conn.WriteTo(packet, &net.IPAddr{IP: net.ParseIP(to)}); err != nil {
+	if _, err := h.conn.WriteTo(packet, &net.IPAddr{IP: net.ParseIP(h.ip)}); err != nil {
 		return err
 	}
 
@@ -19,7 +19,7 @@ func (h *handshake) sendMessage(message string, to string) error {
 }
 
 // listenMessage ip, data, error
-func (h *handshake) listenMessage() (string, []byte, error) {
+func (h *Handshake) listenMessage() (string, []byte, error) {
 	msg := make([]byte, 64)
 
 	length, ip, err := h.conn.ReadFrom(msg)

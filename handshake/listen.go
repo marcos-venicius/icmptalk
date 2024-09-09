@@ -7,9 +7,7 @@ import (
 )
 
 // ListenForConnection returns (connection net address, error)
-func (h *handshake) ListenForConnection() (string, error) {
-	defer h.conn.Close()
-
+func (h *Handshake) ListenForConnection() error {
 	fmt.Printf("[*] listening for connections at %s...\n", h.iface)
 
 	msg := make([]byte, 64)
@@ -46,10 +44,10 @@ func (h *handshake) ListenForConnection() (string, error) {
 
 			s := h.sumSteps() * 2
 
-			err := h.sendMessage(fmt.Sprintf("|%d|", s), h.ip)
+			err := h.sendMessage(fmt.Sprintf("|%d|", s))
 
 			if err != nil {
-				return "", err
+				return err
 			}
 
 			h.listenMessage() // echo reply of previous message
@@ -57,22 +55,22 @@ func (h *handshake) ListenForConnection() (string, error) {
 			ip, data, err := h.listenMessage()
 
 			if err != nil {
-				return "", err
+				return err
 			}
 
 			if ip != h.ip {
-				return "", errors.New("invalid responder")
+				return errors.New("invalid responder")
 			}
 
 			response := parseString(data)
 
 			if response == "OK" {
-				return sourceIP.String(), nil
+				return nil
 			}
 
-			return "", errors.New("handshake failed")
+			return errors.New("handshake failed")
 		}
 	}
 
-	return "", errors.New("no valid handshake")
+	return errors.New("no valid handshake")
 }
