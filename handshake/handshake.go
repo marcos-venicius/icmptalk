@@ -42,6 +42,10 @@ func (h *Handshake) Connection() *icmp.PacketConn {
 	return h.conn
 }
 
+func (h *Handshake) Pair() string {
+	return h.ip
+}
+
 func (h *Handshake) addStep(step int, ip string) bool {
 	if h.steps == 0 || h.shouldValidate() {
 		return false

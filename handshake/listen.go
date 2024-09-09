@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+
+	"github.com/marcos-venicius/icmptalk/protocol"
 )
 
 // ListenForConnection returns (connection net address, error)
@@ -22,6 +24,7 @@ func (h *Handshake) ListenForConnection() error {
 		n, err := parseHandshakeStep(msg[:length])
 
 		if err != nil {
+			protocol.SendMessage(h.conn, "|FAIL|", sourceIP.String())
 			fmt.Printf("[%s] Invalid greeting\n", sourceIP)
 			break
 		}
@@ -29,6 +32,7 @@ func (h *Handshake) ListenForConnection() error {
 		if h.addStep(n, sourceIP.String()) {
 			fmt.Printf("[%s] (%d/%d)\n", sourceIP, h.step, h.steps)
 		} else {
+			protocol.SendMessage(h.conn, "|FAIL|", sourceIP.String())
 			fmt.Printf("[%s] Invalid handshake\n", sourceIP)
 			break
 		}
@@ -44,21 +48,22 @@ func (h *Handshake) ListenForConnection() error {
 
 			s := h.sumSteps() * 2
 
-			err := h.sendMessage(fmt.Sprintf("|%d|", s))
+			err := protocol.SendMessage(h.conn, fmt.Sprintf("|%d|", s), h.ip)
 
 			if err != nil {
 				return err
 			}
 
-			h.listenMessage() // echo reply of previous message
+			protocol.ListenMessage(h.conn, 64) // echo reply of previous message
 
-			ip, data, err := h.listenMessage()
+			ip, data, err := protocol.ListenMessage(h.conn, 64)
 
 			if err != nil {
 				return err
 			}
 
 			if ip != h.ip {
+				protocol.SendMessage(h.conn, "|FAIL|", sourceIP.String())
 				return errors.New("invalid responder")
 			}
 

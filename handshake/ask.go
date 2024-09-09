@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"net"
+
+	"github.com/marcos-venicius/icmptalk/protocol"
 )
 
 func (h *Handshake) AskForConnection(ip string) error {
@@ -36,13 +38,13 @@ func (h *Handshake) AskForConnection(ip string) error {
 	for _, n := range numbers {
 		message := fmt.Sprintf("|%d|", n)
 
-		err := h.sendMessage(message)
+		err := protocol.SendMessage(h.conn, message, h.ip)
 
 		if err != nil {
 			return err
 		}
 
-		sourceIP, _, err := h.listenMessage()
+		sourceIP, _, err := protocol.ListenMessage(h.conn, 64)
 
 		if err != nil {
 			return err
@@ -55,7 +57,7 @@ func (h *Handshake) AskForConnection(ip string) error {
 
 	fmt.Println("handshake sent, waiting confirmation...")
 
-	sourceIP, response, err := h.listenMessage()
+	sourceIP, response, err := protocol.ListenMessage(h.conn, 64)
 
 	if err != nil {
 		return err
@@ -74,12 +76,12 @@ func (h *Handshake) AskForConnection(ip string) error {
 	expected := numbers[len(numbers)-1] * 2
 
 	if n != expected {
-		h.sendMessage("|FAIL|")
+		protocol.SendMessage(h.conn, "|FAIL|", h.ip)
 
 		return errors.New("invalid handshake")
 	}
 
-	h.sendMessage("|OK|")
+	protocol.SendMessage(h.conn, "|OK|", h.ip)
 
 	return nil
 }
